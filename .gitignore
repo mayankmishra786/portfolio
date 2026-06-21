@@ -1,0 +1,26 @@
+.DS_Store
+*.log
+deck*.html
+
+# ship only the assets the site references
+assets/*
+!assets/etheral-shadow.js
+!assets/etheral-mask.png
+!assets/etheral-noise.png
+!assets/meridian-art.png
+!assets/helix-art.png
+!assets/axion-art.png
+!assets/northwind-art.png
+!assets/vantage-art.png
+!assets/helix-cover-botanical.png
+!assets/helix-milestones-graphic-a.png
+!assets/helix-cells-bg.png
+!assets/axion2-concrete-a.png
+!assets/axion-cover-grid.png
+!assets/axion-cover-centered.png
+!assets/northwind-cover-a.png
+!assets/northwind-map-a.png
+!assets/northwind-cover-b.png
+!assets/vantage2-aurora-a.png
+!assets/vantage-cover-b.png
+!assets/vantage-streak-a.png
