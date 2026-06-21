@@ -370,3 +370,11 @@ section[id]{scroll-margin-top:92px}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
 @media (prefers-reduced-motion: reduce){.reveal{opacity:1!important;transform:none!important;transition:none}}
+/* background-music toggle */
+.bgm-btn{position:fixed;right:22px;bottom:22px;z-index:120;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(16,18,24,.72);backdrop-filter:blur(10px);color:var(--tx);display:grid;place-items:center;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .3s}
+.bgm-btn:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.25)}
+.bgm-btn svg{width:17px;height:17px}
+.bgm-btn .ic-pause{display:none}
+.bgm-btn.playing .ic-play{display:none}
+.bgm-btn.playing .ic-pause{display:block}
+.bgm-btn.playing{box-shadow:0 0 0 4px rgba(110,120,240,.12)}

@@ -36,3 +36,5 @@ assets/*
 !assets/img-load.js
 !assets/nav.js
 !assets/reveal.js
+!assets/theme.mp3
+!assets/music.js
