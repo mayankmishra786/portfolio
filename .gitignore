@@ -38,3 +38,8 @@ assets/*
 !assets/reveal.js
 !assets/theme.mp3
 !assets/music.js
+!assets/meridian-thumb.png
+!assets/helix-thumb.png
+!assets/axion-thumb.png
+!assets/northwind-thumb.png
+!assets/vantage-thumb.png
