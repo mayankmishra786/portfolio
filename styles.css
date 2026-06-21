@@ -359,3 +359,8 @@ section[id]{scroll-margin-top:92px}
 img.is-loaded{opacity:1}
 @keyframes shimmer{to{background-position:-200% 0}}
 @media (prefers-reduced-motion: reduce){.card .cov,.shot-full,.shots .s{animation:none}}
+/* etheral effect inside the "see the full deck" card */
+.deck-cta{position:relative;overflow:hidden}
+.deck-cta .etheral-card{opacity:.6}
+.deck-cta .etheral-card::after{background:radial-gradient(120% 90% at 50% 50%,rgba(8,9,12,0) 30%,rgba(8,9,12,.5) 78%,rgba(8,9,12,.85) 100%)}
+.deck-cta h3,.deck-cta p,.deck-cta a{position:relative;z-index:1}
