@@ -339,3 +339,4 @@ section[id]{scroll-margin-top:92px}
   .people{grid-template-columns:1fr}
   .bonus .still{font-size:60px;letter-spacing:-1px}
 }
+.spotify{max-width:520px;width:100%;border:0;border-radius:12px;display:block}
