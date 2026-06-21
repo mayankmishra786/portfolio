@@ -353,3 +353,9 @@ section[id]{scroll-margin-top:92px}
 .zoom-ov{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:40px;background:rgba(8,9,12,.92);backdrop-filter:blur(8px);opacity:0;transition:opacity .25s;cursor:zoom-out}
 .zoom-ov.on{opacity:1}
 .zoom-ov img{max-width:96%;max-height:92%;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+/* image skeleton + fade-in (perceived load speed) */
+.card .cov, .shot-full, .shots .s{background:linear-gradient(100deg,#0e1018 28%,#171a26 50%,#0e1018 72%);background-size:200% 100%;animation:shimmer 1.5s linear infinite}
+.card .cov img, .shot-full img, .shots .s img{opacity:0;transition:opacity .5s ease}
+img.is-loaded{opacity:1}
+@keyframes shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion: reduce){.card .cov,.shot-full,.shots .s{animation:none}}

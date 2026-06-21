@@ -33,3 +33,4 @@ assets/*
 !assets/favicon.svg
 !assets/zoomable.js
 !assets/favicon.png
+!assets/img-load.js
