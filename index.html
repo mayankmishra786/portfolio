@@ -24,6 +24,7 @@
 </header>
 
 <section class="hero">
+  <div class="etheral-bg"><div class="etheral-host"></div></div>
   <div class="glow g1"></div>
   <div class="glow g2"></div>
   <div class="wrap">
@@ -218,6 +219,7 @@
 </section>
 
 <section class="contact" id="contact">
+  <div class="etheral-bg etheral-bottom"><div class="etheral-host" data-color="rgba(96,110,235,0.5)"></div></div>
   <div class="glow g"></div>
   <div class="wrap">
     <div class="k">Get in touch</div>
@@ -237,9 +239,9 @@
       <div class="bh">A song for the <em>scroll</em></div>
       <div class="bsub">Three songs I had on while building this.</div>
       <div class="songs">
-        <button class="song-fac" type="button" data-id="6FahmzZYKH0zb2f9hrVsvw"><span class="pl">&#9654;</span><span class="si"><b>Ordinary Person</b><i>Anirudh Ravichander</i></span></button>
-        <button class="song-fac" type="button" data-id="02BcXEH1zJYbXSabPtNlKf"><span class="pl">&#9654;</span><span class="si"><b>Lose My Mind</b><i>Don Toliver, Doja Cat</i></span></button>
-        <button class="song-fac" type="button" data-id="79WcL9b7spam7V0nBJNa6O"><span class="pl">&#9654;</span><span class="si"><b>Destiny</b><i>Mann Atkeya</i></span></button>
+        <iframe class="spotify" style="border-radius:12px" src="https://open.spotify.com/embed/track/6FahmzZYKH0zb2f9hrVsvw?utm_source=generator&amp;theme=0&amp;si=787366cae9f645d7" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Spotify player"></iframe>
+        <iframe class="spotify" style="border-radius:12px" src="https://open.spotify.com/embed/track/02BcXEH1zJYbXSabPtNlKf?utm_source=generator&amp;theme=0&amp;si=52664fa7a2194693" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Spotify player"></iframe>
+        <iframe class="spotify" style="border-radius:12px" src="https://open.spotify.com/embed/track/79WcL9b7spam7V0nBJNa6O?utm_source=generator&amp;theme=0&amp;si=4e8d955b39ca4875" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Spotify player"></iframe>
       </div>
     </div>
   </div>
@@ -260,6 +262,7 @@
   </div>
 </footer>
 
+<script src="assets/etheral-shadow.js"></script>
 <script>
 (function(){
   function tick(){
@@ -278,6 +281,5 @@
 <audio id="bgm" src="assets/theme.mp3" loop preload="auto"></audio>
 <button id="bgm-toggle" class="bgm-btn" type="button" aria-label="Toggle music"><svg class="ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg></button>
 <script src="assets/music.js"></script>
-<script>(function(){document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".song-fac");if(!b)return;var f=document.createElement("iframe");f.className="spotify";f.src="https://open.spotify.com/embed/track/"+b.getAttribute("data-id")+"?utm_source=generator&theme=0";f.width="100%";f.height="152";f.loading="lazy";f.setAttribute("frameborder","0");f.allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";f.style.cssText="border:0;border-radius:12px";b.replaceWith(f);f.contentWindow&&0;});})();</script>
 </body>
 </html>
