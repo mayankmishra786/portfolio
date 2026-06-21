@@ -340,3 +340,7 @@ section[id]{scroll-margin-top:92px}
   .bonus .still{font-size:60px;letter-spacing:-1px}
 }
 .spotify{max-width:520px;width:100%;border:0;border-radius:12px;display:block}
+.songs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.songs .spotify{max-width:none;width:100%}
+@media(max-width:900px){.songs{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.songs{grid-template-columns:1fr}}
