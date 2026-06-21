@@ -34,3 +34,4 @@ assets/*
 !assets/zoomable.js
 !assets/favicon.png
 !assets/img-load.js
+!assets/nav.js
