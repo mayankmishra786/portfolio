@@ -1,13 +1,17 @@
-/* Fade images in once they finish loading (paired with a CSS shimmer skeleton). */
+/* Stop the skeleton shimmer once an image finishes loading. Images are always
+   visible; this only removes the placeholder animation behind them. */
 (function () {
-  function mark(img) { img.classList.add("is-loaded"); }
+  function done(img) {
+    var c = img.closest && img.closest(".cov, .shot-full, .s");
+    if (c) c.classList.add("loaded");
+  }
   function init() {
     var imgs = document.querySelectorAll(".card .cov img, .shot-full img, .shots img");
     imgs.forEach(function (img) {
-      if (img.complete && img.naturalWidth) { mark(img); }
+      if (img.complete && img.naturalWidth) { done(img); }
       else {
-        img.addEventListener("load", function () { mark(img); });
-        img.addEventListener("error", function () { mark(img); });
+        img.addEventListener("load", function () { done(img); });
+        img.addEventListener("error", function () { done(img); });
       }
     });
   }
