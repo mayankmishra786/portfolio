@@ -192,7 +192,7 @@ footer a:hover{color:var(--tx)}
 .principles .p h4{font-size:17.5px;font-weight:600;margin-bottom:8px}
 .principles .p p{color:var(--mut);font-size:14.5px;line-height:1.6}
 
-.deck-cta{margin-top:90px;border:1px solid var(--line);border-radius:24px;padding:60px 40px;text-align:center;position:relative;overflow:hidden}
+.deck-cta{border:1px solid var(--line);border-radius:24px;padding:60px 40px;text-align:center;position:relative;overflow:hidden}
 .deck-cta .g{width:620px;height:420px;background:radial-gradient(circle,var(--hue),transparent 65%);top:-120px;left:50%;transform:translateX(-50%)}
 .deck-cta h3{font-size:clamp(26px,3.6vw,40px);font-weight:700;letter-spacing:-.02em;margin-bottom:10px;position:relative}
 .deck-cta p{color:var(--mut);margin-bottom:28px;position:relative}
@@ -324,7 +324,7 @@ section[id]{scroll-margin-top:92px}
   .pods{grid-template-columns:1fr}
   .people{grid-template-columns:1fr 1fr}
   .chai{grid-template-columns:1fr;padding:26px;gap:22px;margin-top:48px}
-  .deck-cta{padding:40px 22px;margin-top:60px}
+  .deck-cta{padding:40px 22px}
   .case-hero{padding-top:118px}
   .case-section{padding-top:60px}
   .meta-strip{padding:24px;margin-top:38px}
