@@ -67,13 +67,17 @@ controls.maxDistance = 6;
 controls.maxPolarAngle = Math.PI * 0.92;
 controls.update();
 
-/* lights */
-scene.add(new THREE.HemisphereLight(0x8fa3c0, 0x1a1c22, 0.9));
-const key = new THREE.DirectionalLight(0xffffff, 1.6);
+/* lights — warm key from the front, a real key for the back view,
+   cool rim for separation from the dark backdrop */
+scene.add(new THREE.HemisphereLight(0xbfb3a8, 0x24201c, 0.85));
+const key = new THREE.DirectionalLight(0xfff1e0, 1.5);
 key.position.set(2, 4, 3);
 scene.add(key);
-const rim = new THREE.DirectionalLight(0x6e78f0, 0.5);
-rim.position.set(-2, 2.5, -3);
+const backKey = new THREE.DirectionalLight(0xffe9d6, 1.1);
+backKey.position.set(-1.5, 3.5, -3);
+scene.add(backKey);
+const rim = new THREE.DirectionalLight(0x8f9bff, 0.35);
+rim.position.set(-3, 2, 0);
 scene.add(rim);
 
 /* ground disc for spatial grounding */

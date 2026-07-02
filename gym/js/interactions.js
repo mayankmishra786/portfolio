@@ -31,6 +31,8 @@ export function initInteractions(rendererCanvas, cam, tooltipEl) {
 
   canvas.addEventListener('pointerleave', () => {
     pointerOnCanvas = false;
+    tooltip.hidden = true;
+    canvas.style.cursor = 'grab';
     if (getState().hoveredMuscle) dispatch({ hoveredMuscle: null });
   });
 
