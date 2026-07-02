@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Muscle Map — 3D Gym Anatomy Explorer</title>
+<meta name="description" content="Interactive 3D muscle explorer: click any muscle to learn its function, how to feel it working, and the best exercises with form and tension cues." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%AA%3C/text%3E%3C/svg%3E" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.min.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene" aria-label="Interactive 3D human body — click a muscle to explore it"></canvas>
+
+<div id="tooltip" class="tooltip" hidden></div>
+
+<header class="brand-bar">
+  <span class="logo">MUSCLE<em>MAP</em></span>
+  <span class="tagline">3D gym anatomy explorer</span>
+</header>
+
+<div class="view-controls" role="group" aria-label="Camera views">
+  <button data-view="front" type="button">Front</button>
+  <button data-view="back" type="button">Back</button>
+  <button data-view="initial" type="button">Reset</button>
+</div>
+
+<aside id="panel" class="panel">
+  <button id="sheet-handle" class="sheet-handle" type="button" aria-label="Expand or collapse panel">
+    <span></span>
+  </button>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-mode="explore" role="tab">Explore</button>
+    <button class="tab" data-mode="exercises" role="tab">Exercises</button>
+    <button class="tab" data-mode="splits" role="tab">Splits</button>
+  </nav>
+  <div id="panel-body" class="panel-body"></div>
+</aside>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
