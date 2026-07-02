@@ -89,9 +89,15 @@ ground.rotation.x = -Math.PI / 2;
 ground.position.y = 0.002;
 scene.add(ground);
 
-/* the body */
-const body = buildBody(reduceMotion);
+/* the body (async: loads the GLB) */
+const loadingEl = document.getElementById('loading');
+const body = await buildBody(reduceMotion);
 scene.add(body);
+if (loadingEl) loadingEl.remove();
+if (new URLSearchParams(location.search).has('debug')) {
+  window.__body = body;
+  window.__THREE = THREE;
+}
 
 /* -------------------------------------------------- camera presets */
 

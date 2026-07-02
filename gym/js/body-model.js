@@ -1,26 +1,30 @@
-/* Builds the stylized human body entirely from three.js primitives.
-   The whole figure shares one flesh tone — the "core" is a slightly
-   shadowed version of the same skin color so muscle overlays read as
-   anatomy on a human form rather than parts bolted to a mannequin.
-   Muscle groups are separate meshes so they can be independently
-   hovered, clicked and highlighted; left/right pairs and multi-belly
-   groups share one material and highlight together.
+/* Loads the realistic écorché body (gym/assets/body.glb) and overlays
+   invisible per-muscle "hotspot" volumes built from primitives.
 
-   Proportions: ground at y=0, figure ~1.8 tall, facing +Z.
-   Landmarks: hips y≈0.93 · waist 1.12 · chest 1.40 · shoulders 1.49 */
+   The GLB is one fused mesh, so it can't be picked per muscle; the
+   hotspots do that job: they are raycast targets (raycasting ignores
+   visibility) and, when a muscle is hovered/selected/highlighted, they
+   render as a translucent glow hugging that region of the model.
+
+   Open the page with ?debug to see all hotspot volumes faintly, for
+   alignment tuning.
+
+   Normalized space: ground y=0, body 1.8 tall, facing +Z. */
 
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-/* ---------------------------------------------------------------- palette */
+const DEBUG = typeof location !== 'undefined' &&
+  new URLSearchParams(location.search).has('debug');
 
-const CORE_COLOR = 0x6d6156;    // shadowed flesh — recesses between muscles
+/* --------------------------------------------------------------- states */
 
 const VISUALS = {
-  base:      { color: 0xa0826f, emissive: 0x000000, intensity: 0.0 },
-  hover:     { color: 0xb99680, emissive: 0xff5a3c, intensity: 0.22 },
-  selected:  { color: 0xff4d3a, emissive: 0xff4d3a, intensity: 0.5 },
-  primary:   { color: 0xff4d3a, emissive: 0xff4d3a, intensity: 0.5 },
-  secondary: { color: 0xe0a458, emissive: 0xe0a458, intensity: 0.28 }
+  base:      { color: 0xff4d3a, opacity: DEBUG ? 0.3 : 0.0 },
+  hover:     { color: 0xff6a4d, opacity: 0.38 },
+  selected:  { color: 0xff4d3a, opacity: 0.6 },
+  primary:   { color: 0xff4d3a, opacity: 0.6 },
+  secondary: { color: 0xe0a458, opacity: 0.45 }
 };
 
 /* ------------------------------------------------------------- registry */
@@ -33,19 +37,17 @@ let reduceMotion = false;
 
 function muscleMaterial(id) {
   if (registry.has(id)) return registry.get(id).material;
-  const material = new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshBasicMaterial({
     color: VISUALS.base.color,
-    roughness: 0.62,
-    metalness: 0.02,
-    emissive: 0x000000,
-    emissiveIntensity: 0,
+    transparent: true,
+    opacity: VISUALS.base.opacity,
+    depthWrite: false,
     side: THREE.DoubleSide
   });
   material.userData = {
     state: 'base',
     targetColor: new THREE.Color(VISUALS.base.color),
-    targetEmissive: new THREE.Color(VISUALS.base.emissive),
-    targetIntensity: 0
+    targetOpacity: VISUALS.base.opacity
   };
   registry.set(id, { meshes: [], material });
   return material;
@@ -62,9 +64,7 @@ function registerMuscle(id, ...meshes) {
 }
 
 /* Mirror a right-side (+x) mesh across the YZ plane.
-   Valid for geometries symmetric about their local X axis
-   (spheres, capsules, cylinders) — everything here except delt wedges,
-   which are built explicitly per side. */
+   Valid for geometries symmetric about their local X axis. */
 function mirrored(mesh) {
   const left = mesh.clone();
   left.position.x *= -1;
@@ -79,28 +79,8 @@ function addMirrored(id, mesh) {
 
 /* ------------------------------------------------------ mesh helpers */
 
-const coreMaterial = new THREE.MeshStandardMaterial({
-  color: CORE_COLOR, roughness: 0.75, metalness: 0.02
-});
-/* skin material for the visible neutral parts (head, hands, feet…) —
-   same tone as resting muscles so the figure reads as one body */
-const skinMaterial = new THREE.MeshStandardMaterial({
-  color: VISUALS.base.color, roughness: 0.62, metalness: 0.02
-});
-
-function staticMesh(material, geometry, x, y, z, scale, rotation) {
-  const m = new THREE.Mesh(geometry, material);
-  m.position.set(x, y, z);
-  if (scale) m.scale.set(...scale);
-  if (rotation) m.rotation.set(...rotation);
-  bodyGroup.add(m);
-  return m;
-}
-const coreMesh = (...a) => staticMesh(coreMaterial, ...a);
-const skinMesh = (...a) => staticMesh(skinMaterial, ...a);
-
-function blob(id, r, x, y, z, scale, rotation, segs = 24) {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(r, segs, segs), muscleMaterial(id));
+function blob(id, r, x, y, z, scale, rotation) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14), muscleMaterial(id));
   m.position.set(x, y, z);
   if (scale) m.scale.set(...scale);
   if (rotation) m.rotation.set(...rotation);
@@ -108,180 +88,73 @@ function blob(id, r, x, y, z, scale, rotation, segs = 24) {
 }
 
 function pill(id, r, len, x, y, z, scale, rotation) {
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 8, 20), muscleMaterial(id));
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 6, 14), muscleMaterial(id));
   m.position.set(x, y, z);
   if (scale) m.scale.set(...scale);
   if (rotation) m.rotation.set(...rotation);
   return m;
 }
 
-/* limb segment: capsule whose axis runs exactly from (ax,ay) to (bx,by)
-   in the XY plane — lets arms/legs read as one continuous form */
-function segment(material, r, ax, ay, bx, by, zOff = 0, sz = 1) {
-  const len = Math.hypot(bx - ax, by - ay);
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, len, 8, 20), material);
-  m.position.set((ax + bx) / 2, (ay + by) / 2, zOff);
-  m.rotation.z = Math.atan2(ax - bx, by - ay);
-  m.scale.set(1, 1, sz);
-  bodyGroup.add(m);
-  return m;
-}
+/* ------------------------------------------------------------ hotspots
+   Tuned against the écorché model (T-pose: arms straight out along X,
+   so arm hotspots lie along X and the lateral delt faces up). */
 
-/* joint landmarks (right side; left is mirrored) */
-const J = {
-  shoulder: [0.185, 1.485],
-  elbow: [0.250, 1.195],
-  wrist: [0.288, 0.945],
-  hip: [0.092, 0.935],
-  knee: [0.105, 0.515],
-  ankle: [0.105, 0.085]
-};
+const LAY = -Math.PI / 2;   // rotation.z that lays a capsule along +X
+const ARM_SLOPE = 0.087;    // arms droop slightly from shoulder to fingertip
+const LEG_SLANT = 0.09;     // legs angle outward toward a wide stance
 
-/* ------------------------------------------------------------ core body */
-
-function buildCore() {
-  // skull + jaw — slightly egg-shaped, chin narrower and tucked in
-  skinMesh(new THREE.SphereGeometry(0.102, 28, 28), 0, 1.695, 0, [0.86, 1.06, 0.94]);
-  skinMesh(new THREE.SphereGeometry(0.062, 24, 24), 0, 1.642, 0.03, [0.72, 0.72, 0.78]);
-
-  // torso silhouette — chest fuller, waist drawn in, hips flared
-  const profile = [
-    new THREE.Vector2(0.001, 0.895),
-    new THREE.Vector2(0.118, 0.915),
-    new THREE.Vector2(0.140, 1.000),
-    new THREE.Vector2(0.121, 1.115),
-    new THREE.Vector2(0.132, 1.230),
-    new THREE.Vector2(0.153, 1.335),
-    new THREE.Vector2(0.161, 1.425),
-    new THREE.Vector2(0.148, 1.495),
-    new THREE.Vector2(0.085, 1.545),
-    new THREE.Vector2(0.001, 1.555)
-  ];
-  coreMesh(new THREE.LatheGeometry(profile, 36), 0, 0, 0, [1, 1, 0.60]);
-
-  // clavicle / upper-chest shelf smoothing the neck-to-pec transition
-  skinMesh(new THREE.SphereGeometry(0.09, 24, 20), 0, 1.475, 0.028, [1.55, 0.42, 0.55]);
-
-  // pelvis block + lower-abdomen wedge
-  skinMesh(new THREE.SphereGeometry(0.13, 24, 24), 0, 0.965, 0.004, [1.08, 0.92, 0.72]);
-  skinMesh(new THREE.SphereGeometry(0.09, 20, 20), 0, 1.03, 0.045, [1.15, 0.75, 0.55]);
-
-  // tendinous lines across the rectus — reads as ab segmentation
-  [1.245, 1.185, 1.125].forEach(y => {
-    coreMesh(new THREE.BoxGeometry(0.128, 0.006, 0.02), 0, y, 0.098);
-  });
-  // linea alba (vertical centre groove)
-  coreMesh(new THREE.BoxGeometry(0.007, 0.19, 0.02), 0, 1.185, 0.099);
-  // spine groove
-  coreMesh(new THREE.BoxGeometry(0.012, 0.45, 0.02), 0, 1.25, -0.093);
-
-  const sides = [1, -1];
-  sides.forEach(s => {
-    // arm core: one continuous tapered limb, thick enough that the
-    // muscle overlays merge into it with no visible joints
-    segment(skinMaterial, 0.047, s * J.shoulder[0], J.shoulder[1], s * J.elbow[0], J.elbow[1]);
-    segment(skinMaterial, 0.038, s * J.elbow[0], J.elbow[1], s * J.wrist[0], J.wrist[1]);
-    // hand mitt + thumb hint
-    skinMesh(new THREE.SphereGeometry(0.045, 20, 20), s * 0.298, 0.868, 0.012, [0.72, 1.25, 0.42], [0.1, 0, s * -0.15]);
-    skinMesh(new THREE.CapsuleGeometry(0.015, 0.035, 4, 10), s * 0.272, 0.90, 0.035, null, [0.5, 0, s * 0.5]);
-
-    // leg core: thigh and shin as continuous tapered segments
-    segment(skinMaterial, 0.064, s * J.hip[0], J.hip[1], s * J.knee[0], J.knee[1]);
-    segment(skinMaterial, 0.043, s * J.knee[0], J.knee[1], s * J.ankle[0], J.ankle[1]);
-    // knee cap smoothing
-    skinMesh(new THREE.SphereGeometry(0.047, 20, 20), s * J.knee[0], J.knee[1], 0.012, [1, 1.1, 0.95]);
-    // foot: heel + instep + toe box
-    skinMesh(new THREE.SphereGeometry(0.042, 20, 20), s * J.ankle[0], 0.052, -0.015);
-    skinMesh(new THREE.CapsuleGeometry(0.040, 0.115, 6, 14), s * 0.108, 0.045, 0.065, [1, 1, 0.82], [Math.PI / 2, 0, 0]);
-    skinMesh(new THREE.SphereGeometry(0.043, 20, 20), s * 0.106, 0.042, 0.135, [1.05, 0.75, 0.9]);
-  });
-}
-
-/* ------------------------------------------------------------- muscles */
-
+/* Positions/depths below come from measuring the normalized mesh
+   (vertex slices in ?debug mode). Note the model's torso axis sits at
+   z≈-0.06 — the bbox is centred by the forward-pointing feet — and the
+   T-pose arms lie at z≈-0.09. */
 function buildMuscles() {
-  /* --- neck: column + sternocleidomastoid hints --- */
-  const neckCol = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.075, 0.11, 20), muscleMaterial('neck'));
-  neckCol.position.set(0, 1.575, -0.004);
-  neckCol.scale.set(1, 1, 0.88);
-  registerMuscle('neck', neckCol);
-  addMirrored('neck', pill('neck', 0.014, 0.075, 0.032, 1.575, 0.038, [1, 1, 1], [0.18, 0, -0.22]));
+  /* --- neck --- */
+  registerMuscle('neck', pill('neck', 0.042, 0.07, 0, 1.50, -0.05, [1.15, 1, 1.4]));
 
-  /* --- traps: slopes blending neck into shoulders + mid kite --- */
-  addMirrored('traps', blob('traps', 0.085, 0.085, 1.522, -0.012, [1.5, 0.52, 0.72], [0, 0, -0.34]));
-  registerMuscle('traps', blob('traps', 0.07, 0, 1.44, -0.085, [0.95, 1.65, 0.35]));
+  /* --- traps: neck-to-shoulder slopes + mid kite on the upper back --- */
+  addMirrored('traps', blob('traps', 0.07, 0.095, 1.47, -0.07, [1.3, 0.5, 0.9], [0, 0, -0.22]));
+  registerMuscle('traps', blob('traps', 0.06, 0, 1.38, -0.18, [0.95, 1.55, 0.6]));
 
-  /* --- delts: 3 sphere wedges per shoulder, built per side ---
-     wedge geometry is centred on local -X; rotation.y aims it.
-     thetaStart > 0 keeps the wedges from z-fighting at the pole. */
-  const deltGeo = () =>
-    new THREE.SphereGeometry(0.094, 28, 18, -Math.PI / 3, (Math.PI * 2) / 3, Math.PI * 0.08, Math.PI * 0.58);
-  const addDelt = (id, side, rotY) => {
-    const m = new THREE.Mesh(deltGeo(), muscleMaterial(id));
-    m.position.set(side * 0.192, 1.462, 0);
-    m.scale.set(1, 1.08, 0.94);
-    m.rotation.y = rotY;
-    registerMuscle(id, m);
-  };
-  [1, -1].forEach(s => {
-    addDelt('deltsFront', s, Math.PI / 2);            // faces +Z
-    addDelt('deltsSide', s, s === 1 ? Math.PI : 0);   // faces outward
-    addDelt('deltsRear', s, -Math.PI / 2);            // faces -Z
-  });
+  /* --- delts: front / top(lateral) / rear around the shoulder ball --- */
+  addMirrored('deltsFront', blob('deltsFront', 0.05, 0.25, 1.43, -0.01, [1.15, 1, 0.85]));
+  addMirrored('deltsSide', blob('deltsSide', 0.055, 0.255, 1.465, -0.08, [1.25, 0.85, 1]));
+  addMirrored('deltsRear', blob('deltsRear', 0.05, 0.25, 1.42, -0.15, [1.15, 1, 0.85]));
 
-  /* --- pecs: broad angled plates, fuller at the sternum --- */
-  addMirrored('pecs', blob('pecs', 0.088, 0.079, 1.402, 0.083, [1.28, 0.78, 0.42], [0.16, 0.14, -0.10]));
+  /* --- pecs --- */
+  addMirrored('pecs', blob('pecs', 0.09, 0.12, 1.31, 0.04, [1.25, 0.78, 0.6], [0.1, 0, -0.08]));
 
-  /* --- abs: two rectus columns (grooves come from the core lines) --- */
-  addMirrored('abs', pill('abs', 0.034, 0.155, 0.031, 1.185, 0.082, [1.12, 1, 0.5], [-0.06, 0, 0]));
+  /* --- abs: two rectus columns --- */
+  addMirrored('abs', pill('abs', 0.035, 0.15, 0.042, 1.14, 0.05, [1.25, 1, 1.2]));
 
-  /* --- obliques: slim sheets hugging the waist --- */
-  addMirrored('obliques', blob('obliques', 0.05, 0.100, 1.155, 0.028, [0.55, 1.55, 0.5], [0, 0, -0.10]));
+  /* --- obliques --- */
+  addMirrored('obliques', blob('obliques', 0.05, 0.11, 1.12, -0.03, [0.8, 1.5, 1.2]));
 
-  /* --- lats: wide fans from armpit toward the spine --- */
-  addMirrored('lats', blob('lats', 0.095, 0.088, 1.285, -0.058, [0.92, 1.65, 0.42], [0, 0.24, -0.28]));
+  /* --- lats --- */
+  addMirrored('lats', blob('lats', 0.09, 0.10, 1.21, -0.145, [0.9, 1.45, 0.7], [0, 0.2, -0.25]));
 
-  /* --- mid back (rhomboids) --- */
-  registerMuscle('midBack', blob('midBack', 0.075, 0, 1.375, -0.088, [1.2, 0.85, 0.32]));
+  /* --- mid back --- */
+  registerMuscle('midBack', blob('midBack', 0.07, 0, 1.34, -0.16, [1.15, 0.95, 0.7]));
 
-  /* --- lower back (erectors) --- */
-  addMirrored('lowerBack', pill('lowerBack', 0.027, 0.19, 0.033, 1.055, -0.062, [1, 1, 0.9]));
+  /* --- lower back --- */
+  addMirrored('lowerBack', pill('lowerBack', 0.03, 0.15, 0.04, 0.99, -0.175, [1, 1, 1.1]));
 
-  /* --- glutes: rounded but tucked into the pelvis --- */
-  addMirrored('glutes', blob('glutes', 0.092, 0.075, 0.925, -0.048, [0.95, 1.02, 0.74], [-0.1, 0, -0.08]));
+  /* --- glutes --- */
+  addMirrored('glutes', blob('glutes', 0.085, 0.085, 0.92, -0.14, [1, 1.05, 0.9]));
 
-  /* --- arms --- */
-  const armTilt = Math.atan2(J.elbow[0] - J.shoulder[0], J.shoulder[1] - J.elbow[1]);
-  const foreTilt = Math.atan2(J.wrist[0] - J.elbow[0], J.elbow[1] - J.wrist[1]);
-  const upperMid = [(J.shoulder[0] + J.elbow[0]) / 2, (J.shoulder[1] + J.elbow[1]) / 2];
+  /* --- arms (horizontal along X at z≈-0.09, drooping slightly) --- */
+  addMirrored('biceps', pill('biceps', 0.045, 0.20, 0.42, 1.435, -0.05, [0.85, 1, 1], [0, 0, LAY - ARM_SLOPE]));
+  addMirrored('triceps', pill('triceps', 0.045, 0.22, 0.43, 1.425, -0.125, [0.9, 1, 1], [0, 0, LAY - ARM_SLOPE]));
+  addMirrored('forearms', pill('forearms', 0.04, 0.18, 0.67, 1.41, -0.085, [0.9, 1, 1.4], [0, 0, LAY - ARM_SLOPE]));
 
-  addMirrored('biceps', pill('biceps', 0.036, 0.115, upperMid[0] - 0.004, upperMid[1] + 0.005, 0.030, [1, 1, 0.82], [0, 0, -armTilt]));
-  addMirrored('triceps', pill('triceps', 0.038, 0.125, upperMid[0] + 0.006, upperMid[1] - 0.005, -0.026, [1, 1, 0.88], [0, 0, -armTilt]));
-  // forearm belly sits on the upper third, tapering toward the wrist
-  addMirrored('forearms', pill('forearms', 0.040, 0.095, J.elbow[0] + 0.014, J.elbow[1] - 0.075, 0.004, [1, 1, 0.85], [0, 0, -foreTilt]));
-
-  /* --- quads: vastus lateralis / medialis + rectus femoris teardrop --- */
-  addMirrored('quads', pill('quads', 0.047, 0.185, J.hip[0] + 0.030, 0.735, 0.030, [1, 1, 0.88], [0, 0, -0.04]));
-  addMirrored('quads', pill('quads', 0.043, 0.150, J.hip[0] - 0.021, 0.700, 0.040, [1, 1, 0.88], [0, 0, 0.05]));
-  addMirrored('quads', pill('quads', 0.040, 0.200, J.hip[0] + 0.006, 0.740, 0.052, [1, 1, 0.8], [0, 0, 0.005]));
-
-  /* --- hamstrings: two-belly rear thigh --- */
-  addMirrored('hamstrings', pill('hamstrings', 0.044, 0.185, J.hip[0] + 0.018, 0.715, -0.042, [1, 1, 0.85], [0, 0, -0.02]));
-  addMirrored('hamstrings', pill('hamstrings', 0.040, 0.165, J.hip[0] - 0.016, 0.705, -0.044, [1, 1, 0.85], [0, 0, 0.03]));
-
-  /* --- adductors: inner-thigh wedge, high near the groin --- */
-  addMirrored('adductors', pill('adductors', 0.040, 0.130, 0.048, 0.775, 0.002, [0.8, 1, 0.85], [0, 0, 0.10]));
-
-  /* --- calves: two gastrocnemius heads + soleus taper --- */
-  addMirrored('calves', blob('calves', 0.042, J.knee[0] + 0.012, 0.395, -0.035, [0.85, 1.3, 0.72]));
-  addMirrored('calves', blob('calves', 0.040, J.knee[0] - 0.014, 0.39, -0.037, [0.8, 1.25, 0.70]));
-  addMirrored('calves', pill('calves', 0.030, 0.10, J.knee[0], 0.30, -0.030, [1.15, 1, 0.8]));
+  /* --- legs (slanting outward with the stance) --- */
+  addMirrored('quads', pill('quads', 0.06, 0.26, 0.12, 0.70, 0.03, [1.1, 1, 0.85], [0, 0, LEG_SLANT]));
+  addMirrored('hamstrings', pill('hamstrings', 0.055, 0.24, 0.12, 0.70, -0.115, [1, 1, 0.85], [0, 0, LEG_SLANT]));
+  addMirrored('adductors', pill('adductors', 0.045, 0.15, 0.06, 0.78, -0.03, [0.8, 1, 0.9], [0, 0, 0.12]));
+  addMirrored('calves', pill('calves', 0.05, 0.14, 0.18, 0.33, -0.085, [1, 1, 1], [0, 0, LEG_SLANT]));
 }
 
 /* ------------------------------------------------------------ highlight */
 
-/* Recomputes every muscle's visual from the app state. One source of
-   truth, so explore/exercise/split modes can never leave stale colors. */
 export function resolveHighlights(state, exercisesById, splitsById) {
   const target = {};
   registry.forEach((_, id) => { target[id] = 'base'; });
@@ -314,32 +187,44 @@ export function setMuscleVisual(id, visualState) {
   if (ud.state === visualState) return;
   ud.state = visualState;
   ud.targetColor.setHex(v.color);
-  ud.targetEmissive.setHex(v.emissive);
-  ud.targetIntensity = v.intensity;
+  ud.targetOpacity = v.opacity;
   if (reduceMotion) {
     entry.material.color.copy(ud.targetColor);
-    entry.material.emissive.copy(ud.targetEmissive);
-    entry.material.emissiveIntensity = ud.targetIntensity;
+    entry.material.opacity = ud.targetOpacity;
   }
 }
 
-/* Called every frame: eases colors toward their targets. */
+/* Called every frame: eases the overlays toward their targets. */
 export function updateHighlights() {
   if (reduceMotion) return;
   registry.forEach(entry => {
     const mat = entry.material;
     const ud = mat.userData;
-    mat.color.lerp(ud.targetColor, 0.16);
-    mat.emissive.lerp(ud.targetEmissive, 0.16);
-    mat.emissiveIntensity += (ud.targetIntensity - mat.emissiveIntensity) * 0.16;
+    mat.color.lerp(ud.targetColor, 0.18);
+    mat.opacity += (ud.targetOpacity - mat.opacity) * 0.18;
   });
 }
 
 /* ------------------------------------------------------------- exports */
 
-export function buildBody(prefersReducedMotion) {
+export async function buildBody(prefersReducedMotion) {
   reduceMotion = prefersReducedMotion;
-  buildCore();
+
+  const gltf = await new GLTFLoader().loadAsync('assets/body.glb');
+  const model = gltf.scene;
+
+  // normalize: 1.8 units tall, feet on the ground, centred, facing +Z
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const s = 1.8 / size.y;
+  model.scale.setScalar(s);
+  box.setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  model.position.x -= center.x;
+  model.position.z -= center.z;
+  model.position.y -= box.min.y;
+  bodyGroup.add(model);
+
   buildMuscles();
   return bodyGroup;
 }

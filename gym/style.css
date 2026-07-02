@@ -39,6 +39,29 @@ html, body {
 }
 #scene:active { cursor: grabbing; }
 
+/* ----------------------------------------------------------- loading */
+
+.loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  animation: loading-pulse 1.2s ease-in-out infinite;
+}
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading { animation: none; }
+}
+
 /* ----------------------------------------------------------- tooltip */
 
 .tooltip {
@@ -169,6 +192,18 @@ html, body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.15) transparent;
 }
+
+.credit {
+  flex-shrink: 0;
+  padding: 8px 20px 10px;
+  border-top: 1px solid var(--panel-border);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+.credit a { color: var(--text-dim); }
+.credit a:hover { color: var(--accent); }
 
 /* ------------------------------------------------------- panel content */
 
